@@ -1,20 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My First Professional Website</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; background-color: #f0f8ff; padding: 50px; }
-        h1 { color: #2c3e50; }
-        p { color: #34495e; font-size: 1.2em; }
-        .box { border: 2px solid #3498db; padding: 20px; border-radius: 10px; background: white; display: inline-block; }
-    </style>
-</head>
-<body>
-    <div class="box">
-        <h1>Hello World from Morocco! 🇲🇦</h1>
-        <p>I am <strong>Abdelhak</strong>, and this is my first website built with AI on GitHub.</p>
-        <p>Learning new tech skills every day!</p>
-    </div>
-</body>
-</html>
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.filechooser import FileChooserIconView
+from PIL import Image
+import os
+
+class PDFMakerApp(App):
+    def build(self):
+        self.selected_files = []
+        
+        # Main Layout
+        self.layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        
+        # Header Label
+        self.label = Label(
+            text="Professional PDF Maker", 
+            font_size='22sp', 
+            size_hint_y=0.1,
+            color=(0.2, 0.6, 1, 1)
+        )
+        self.layout.add_widget(self.label)
+        
+        # File Chooser with Icons (Better Look)
+        # Note: /sdcard/ is the internal storage for Android
+        self.file_chooser = FileChooserIconView(
+            path='/sdcard/',
+            multiselect=True, 
+            size_hint_y=0.7
+        )
+        self.layout.add_widget(self.file_chooser)
+        
+        # Action Button
+        self.btn = Button(
+            text="CONVERT SELECTED TO PDF",
+            size_hint_y=0.15,
+            background_color=(0, 0.5, 0.8, 1),
+            font_size='18sp',
+            bold=True
+        )
+        self.btn.bind(on_press=self.make_pdf)
+        self.layout.add_widget(self.btn)
+        
+        return self.layout
+
+    def make_pdf(self, instance):
+        # Get selected files from chooser
+        files = self.file_chooser.selection
+        
+        if not files:
+            self.label.text = "Error: Please select images first!"
+            self.label.color = (1, 0, 0, 1)
+            return
+        
+        image_list = []
+        # Sort files to maintain order (1, 2, 3...)
+        sorted_files = sorted(files)
+        
+        for path in sorted_files:
+            if path.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+                try:
+                    img = Image.open(path).convert('RGB')
+                    image_list.append(img)
+                except:
+                    continue
+        
+        if image_list:
+            # Saving to Downloads folder for easy access
+            output_path = "/sdcard/Download/My_New_File.pdf"
+            image_list[0].save(
+                output_path, 
+                save_all=True, 
+                append_images=image_list[1:]
+            )
+            self.label.text = "SUCCESS! Saved in Downloads"
+            self.label.color = (0, 1, 0, 1)
+        else:
+            self.label.text = "Error: No valid images found!"
+            self.label.color = (1, 0, 0, 1)
+
+if __name__ == "__main__":
+    PDFMakerApp().run()
